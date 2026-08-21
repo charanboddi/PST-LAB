@@ -1,0 +1,43 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Player {
+    char name[50];
+    int score;
+} Player;
+
+// Comparator function for qsort
+int comparator(const void *a, const void *b) {
+    Player *playerA = (Player *)a;
+    Player *playerB = (Player *)b;
+
+    // 1. Sort by score in descending order
+    if (playerA->score != playerB->score) {
+        return playerB->score - playerA->score;
+    }
+
+    // 2. If scores are equal, sort by name in ascending (alphabetical) order
+    return strcmp(playerA->name, playerB->name);
+}
+
+int main() {
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+
+    Player *players = malloc(n * sizeof(Player));
+    for (int i = 0; i < n; i++) {
+        scanf("%s %d", players[i].name, &players[i].score);
+    }
+
+    // Sort array using qsort
+    qsort(players, n, sizeof(Player), comparator);
+
+    // Print sorted array
+    for (int i = 0; i < n; i++) {
+        printf("%s %d\n", players[i].name, players[i].score);
+    }
+
+    free(players);
+    return 0;
+}
