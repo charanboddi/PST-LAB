@@ -1,0 +1,64 @@
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        int k = sc.nextInt();
+
+        int[] arr = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            arr[i] = sc.nextInt();
+        }
+
+        Deque<Integer> deque = new ArrayDeque<Integer>();
+        HashMap<Integer, Integer> freq = new HashMap<Integer, Integer>();
+
+        int maxUnique = 0;
+
+        // First window
+        for (int i = 0; i < k; i++) {
+            deque.addLast(arr[i]);
+
+            if (freq.containsKey(arr[i])) {
+                freq.put(arr[i], freq.get(arr[i]) + 1);
+            } else {
+                freq.put(arr[i], 1);
+            }
+        }
+
+        maxUnique = freq.size();
+
+        // Slide the window
+        for (int i = k; i < n; i++) {
+
+            // Add new element
+            int newNum = arr[i];
+            deque.addLast(newNum);
+
+            if (freq.containsKey(newNum)) {
+                freq.put(newNum, freq.get(newNum) + 1);
+            } else {
+                freq.put(newNum, 1);
+            }
+
+            // Remove first element
+            int front = deque.removeFirst();
+
+            if (freq.get(front) == 1) {
+                freq.remove(front);
+            } else {
+                freq.put(front, freq.get(front) - 1);
+            }
+
+            // Update maximum
+            if (freq.size() > maxUnique) {
+                maxUnique = freq.size();
+            }
+        }
+
+        System.out.println(maxUnique);
+    }
+}
