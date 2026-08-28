@@ -1,0 +1,38 @@
+#include <stdio.h>
+
+char* timeConversion(char* s) {
+    static char result[9];
+
+    int hour = (s[0] - '0') * 10 + (s[1] - '0');
+
+    if (s[8] == 'A') {
+        if (hour == 12) {
+            hour = 0;
+        }
+    } else {
+        if (hour != 12) {
+            hour += 12;
+        }
+    }
+
+    result[0] = (hour / 10) + '0';
+    result[1] = (hour % 10) + '0';
+
+    for (int i = 2; i < 8; i++) {
+        result[i] = s[i];
+    }
+
+    result[8] = '\0';
+
+    return result;
+}
+
+int main() {
+    char s[11];
+
+    scanf("%10s", s);
+
+    printf("%s\n", timeConversion(s));
+
+    return 0;
+}
