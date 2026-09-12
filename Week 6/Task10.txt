@@ -1,0 +1,210 @@
+import java.io.*;
+import java.util.*;
+
+public class Solution {
+
+    static int[] manacher(char[] s) {
+        int n = s.length;
+        int[] p = new int[2 * n];
+        int i = 0, j = 0;
+
+        while (i < 2 * n) {
+            while (i - j >= 0 && i + j + 1 < 2 * n &&
+                   s[(i - j) / 2] == s[(i + j + 1) / 2])
+                j++;
+
+            p[i] = j;
+
+            int k = 1;
+            while (i - k >= 0 && p[i] - k >= 0 &&
+                   p[i - k] != p[i] - k) {
+                p[i + k] = Math.min(p[i - k], p[i] - k);
+                k++;
+            }
+
+            i += k;
+            j = Math.max(j - k, 0);
+        }
+        return p;
+    }
+
+    static long pack(int pos, int id) {
+        return ((long) pos << 32) | (id & 0xffffffffL);
+    }
+
+    static class Heap {
+        int[] val, id, pos;
+        int size = 0;
+
+        Heap(int n) {
+            val = new int[n + 5];
+            id = new int[n + 5];
+            pos = new int[n + 5];
+            Arrays.fill(pos, -1);
+        }
+
+        void add(int x, int v) {
+            if (pos[x] != -1) return;
+
+            int p = ++size;
+            val[p] = v;
+            id[p] = x;
+            pos[x] = p;
+
+            up(p);
+        }
+
+        void remove(int x) {
+            int p = pos[x];
+            if (p == -1) return;
+
+            int last = size--;
+
+            if (p != last) {
+                val[p] = val[last];
+                id[p] = id[last];
+                pos[id[p]] = p;
+                up(p);
+                down(p);
+            }
+
+            pos[x] = -1;
+        }
+
+        int max() {
+            return val[1];
+        }
+
+        void up(int p) {
+            while (p > 1) {
+                int q = p >> 1;
+                if (val[q] >= val[p]) break;
+                swap(p, q);
+                p = q;
+            }
+        }
+
+        void down(int p) {
+            while (true) {
+                int l = p << 1;
+                if (l > size) break;
+
+                int r = l + 1;
+                int x = l;
+
+                if (r <= size && val[r] > val[l])
+                    x = r;
+
+                if (val[p] >= val[x]) break;
+
+                swap(p, x);
+                p = x;
+            }
+        }
+
+        void swap(int a, int b) {
+            int t = val[a];
+            val[a] = val[b];
+            val[b] = t;
+
+            t = id[a];
+            id[a] = id[b];
+            id[b] = t;
+
+            pos[id[a]] = a;
+            pos[id[b]] = b;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(System.in));
+
+        int n = Integer.parseInt(br.readLine().trim());
+        String s = br.readLine().trim();
+
+        char[] a = (s + s).toCharArray();
+
+        int[] p = manacher(a);
+
+        long[] event = new long[16 * n];
+        int ec = 0;
+
+        for (int i = 0; i < 4 * n; i += 2) {
+            p[i] = Math.min(p[i], n - ((n & 1) ^ 1));
+
+            int c = i / 2;
+
+            event[ec++] = pack(c, i);
+            event[ec++] = pack(c + p[i] / 2, i);
+            event[ec++] = pack(c + n - p[i] / 2 - 1, i);
+            event[ec++] = pack(c + n, i);
+        }
+
+        for (int i = 1; i < 4 * n; i += 2) {
+            p[i] = Math.min(p[i], n - (n & 1));
+
+            int c = i / 2;
+
+            event[ec++] = pack(c, i);
+            event[ec++] = pack(c + p[i] / 2, i);
+            event[ec++] = pack(c + n - p[i] / 2, i);
+            event[ec++] = pack(c + n, i);
+        }
+
+        Arrays.sort(event, 0, ec);
+
+        Heap inc = new Heap(4 * n);
+        Heap flat = new Heap(4 * n);
+        Heap dec = new Heap(4 * n);
+
+        int[] state = new int[4 * n];
+        int ep = 0;
+
+        StringBuilder out = new StringBuilder();
+
+        for (int w = 0; w < 2 * n - 1; w++) {
+
+            while (ep < ec && (event[ep] >>> 32) <= w) {
+
+                int id = (int) event[ep++];
+
+                if (state[id] == 0) {
+                    inc.add(id, (p[id] & 1) - 2 * w);
+
+                } else if (state[id] == 1) {
+                    inc.remove(id);
+                    flat.add(id, p[id]);
+
+                } else if (state[id] == 2) {
+                    flat.remove(id);
+                    dec.add(id, p[id] + 2 * w);
+
+                } else {
+                    dec.remove(id);
+                }
+
+                state[id]++;
+            }
+
+            if (w >= n - 1) {
+
+                int best = 1;
+
+                if (inc.size > 0)
+                    best = Math.max(best, inc.max() + 2 * w);
+
+                if (flat.size > 0)
+                    best = Math.max(best, flat.max());
+
+                if (dec.size > 0)
+                    best = Math.max(best, dec.max() - 2 * w);
+
+                out.append(best).append('\n');
+            }
+        }
+
+        System.out.print(out);
+    }
+}
